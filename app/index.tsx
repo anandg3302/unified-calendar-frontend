@@ -8,10 +8,14 @@ export default function Index() {
   const router = useRouter();
 
   useEffect(() => {
+    console.log('Auth state:', { user, isLoading }); // Debugging log
+
     if (!isLoading) {
       if (user) {
+        console.log('User authenticated. Navigating to calendar.');
         router.replace('/(tabs)/calendar');
       } else {
+        console.log('User not authenticated. Navigating to login.');
         router.replace('/(auth)/login');
       }
     }

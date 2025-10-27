@@ -15,7 +15,61 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useCalendarStore } from '../stores/calendarStore';
 import { format, parseISO } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import CustomDateTimePicker from '../components/CustomDateTimePicker';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  content: {
+    flexGrow: 1,
+  },
+  field: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+    padding: 8,
+    fontSize: 16,
+  },
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 4,
+  },
+  dateText: {
+    marginLeft: 8,
+    fontSize: 16,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  button: {
+    backgroundColor: '#007BFF',
+    padding: 12,
+    borderRadius: 4,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
 
 export default function EditEventScreen() {
   const router = useRouter();
@@ -42,6 +96,15 @@ export default function EditEventScreen() {
       setEndDate(parseISO(event.end_time));
     }
   }, [event]);
+
+  // Cleanup effect to handle DateTimePicker state properly
+  useEffect(() => {
+    return () => {
+      // Clean up picker states when component unmounts
+      setShowStartPicker(false);
+      setShowEndPicker(false);
+    };
+  }, []);
 
   if (!event) {
     return (
@@ -113,14 +176,14 @@ export default function EditEventScreen() {
             </Text>
           </TouchableOpacity>
           {showStartPicker && (
-            <DateTimePicker
+            <CustomDateTimePicker
+              testID="startDatePicker"
               value={startDate}
               mode="datetime"
               is24Hour={true}
-              display="default"
               onChange={(event, selectedDate) => {
                 setShowStartPicker(false);
-                if (selectedDate) {
+                if (event.type === 'set' && selectedDate) {
                   setStartDate(selectedDate);
                   if (selectedDate >= endDate) {
                     setEndDate(new Date(selectedDate.getTime() + 60 * 60 * 1000));
@@ -129,6 +192,7 @@ export default function EditEventScreen() {
               }}
             />
           )}
+
         </View>
 
         {/* End Time */}
@@ -145,20 +209,21 @@ export default function EditEventScreen() {
             </Text>
           </TouchableOpacity>
           {showEndPicker && (
-            <DateTimePicker
+            <CustomDateTimePicker
+              testID="endDatePicker"
               value={endDate}
               mode="datetime"
               is24Hour={true}
-              display="default"
               minimumDate={startDate}
               onChange={(event, selectedDate) => {
                 setShowEndPicker(false);
-                if (selectedDate) {
+                if (event.type === 'set' && selectedDate) {
                   setEndDate(selectedDate);
                 }
               }}
             />
           )}
+
         </View>
 
         {/* Location */}
@@ -177,120 +242,29 @@ export default function EditEventScreen() {
         <View style={styles.field}>
           <Text style={styles.label}>Description</Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Add description"
+            style={styles.input}
+            placeholder="Event description"
             value={description}
             onChangeText={setDescription}
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
             editable={!isLoading}
           />
         </View>
-      </ScrollView>
 
-      {/* Action Buttons */}
-      <View style={styles.actions}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.cancelButton]}
-          onPress={() => router.back()}
-          disabled={isLoading}
-        >
-          <Text style={styles.cancelButtonText}>Cancel</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.updateButton]}
-          onPress={handleUpdate}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.updateButtonText}>Update Event</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+        {/* Update Button */}
+        <View style={styles.field}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleUpdate}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Update Event</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff'
-  },
-  content: {
-    flex: 1,
-    padding: 16
-  },
-  field: {
-    marginBottom: 24
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: '#333',
-    backgroundColor: '#f9f9f9'
-  },
-  textArea: {
-    minHeight: 100
-  },
-  dateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    backgroundColor: '#f9f9f9'
-  },
-  dateText: {
-    fontSize: 16,
-    color: '#333',
-    marginLeft: 8
-  },
-  actions: {
-    flexDirection: 'row',
-    padding: 16,
-    gap: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#eee'
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center'
-  },
-  cancelButton: {
-    backgroundColor: '#f0f0f0'
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666'
-  },
-  updateButton: {
-    backgroundColor: '#4285F4'
-  },
-  updateButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff'
-  },
-  errorText: {
-    textAlign: 'center',
-    marginTop: 32,
-    fontSize: 16,
-    color: '#999'
-  }
-});

@@ -9,20 +9,21 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { useCalendarStore } from '../../stores/calendarStore';
-import { format, parseISO, isPast, isFuture, isToday } from 'date-fns';
+import { parseISO, isToday, isFuture, isPast, format } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
 const CALENDAR_COLORS = {
   google: '#4285F4',
   apple: '#FF3B30',
-  outlook: '#0078D4'
+  outlook: '#0078D4',
+  local: '#34C759'
 };
 
 export default function EventsScreen() {
   const router = useRouter();
-  const { events, isLoading, fetchEvents } = useCalendarStore();
-  const [refreshing, setRefreshing] = useState(false);
+  const { events: calendarEvents, isLoading, fetchEvents } = useCalendarStore();
+   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'invites'>('upcoming');
 
   useEffect(() => {
@@ -38,18 +39,25 @@ export default function EventsScreen() {
   const getFilteredEvents = () => {
     const now = new Date();
     
-    switch (filter) {
-      case 'upcoming':
-        return events.filter(event => 
+ switch (filter) {
+  case 'upcoming':
+    return Array.isArray(calendarEvents)
+      ? calendarEvents.filter(event =>
           isFuture(parseISO(event.start_time)) || isToday(parseISO(event.start_time))
-        );
-      case 'past':
-        return events.filter(event => isPast(parseISO(event.end_time)));
-      case 'invites':
-        return events.filter(event => event.is_invite && event.invite_status === 'pending');
-      default:
-        return events;
-    }
+        )
+      : [];
+  case 'past':
+    return Array.isArray(calendarEvents)
+      ? calendarEvents.filter(event => isPast(parseISO(event.end_time)))
+      : [];
+  case 'invites':
+    return Array.isArray(calendarEvents)
+      ? calendarEvents.filter(event => event.is_invite && event.invite_status === 'pending')
+      : [];
+  default:
+    return Array.isArray(calendarEvents) ? calendarEvents : [];
+}
+
   };
 
   const filteredEvents = getFilteredEvents();

@@ -15,7 +15,7 @@ import { useRouter } from 'expo-router';
 import { useCalendarStore } from '../stores/calendarStore';
 import { format } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import CustomDateTimePicker from '../components/CustomDateTimePicker';
 
 const CALENDAR_SOURCES = [
   { id: 'google', name: 'Google Calendar', color: '#4285F4' },
@@ -36,6 +36,15 @@ export default function CreateEventScreen() {
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Cleanup effect to handle DateTimePicker state properly
+  React.useEffect(() => {
+    return () => {
+      // Clean up picker states when component unmounts
+      setShowStartPicker(false);
+      setShowEndPicker(false);
+    };
+  }, []);
 
   const handleCreate = async () => {
     if (!title.trim()) {
@@ -69,148 +78,156 @@ export default function CreateEventScreen() {
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <ScrollView style={styles.content}>
-        {/* Title */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Title *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Event title"
-            value={title}
-            onChangeText={setTitle}
-            editable={!isLoading}
-          />
-        </View>
-
-        {/* Calendar Source */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Calendar</Text>
-          <View style={styles.sourcesContainer}>
-            {CALENDAR_SOURCES.map(source => (
-              <TouchableOpacity
-                key={source.id}
-                style={[
-                  styles.sourceChip,
-                  calendarSource === source.id && {
-                    backgroundColor: source.color,
-                    borderColor: source.color
-                  }
-                ]}
-                onPress={() => setCalendarSource(source.id)}
-                disabled={isLoading}
-              >
-                <View 
-                  style={[
-                    styles.sourceDot, 
-                    { backgroundColor: source.color }
-                  ]} 
-                />
-                <Text style={[
-                  styles.sourceText,
-                  calendarSource === source.id && styles.sourceTextActive
-                ]}>
-                  {source.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
+    <View style={styles.container}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}
+      >
+        <ScrollView 
+          style={styles.content}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Title */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Title *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Event title"
+              value={title}
+              onChangeText={setTitle}
+              editable={!isLoading}
+            />
           </View>
-        </View>
 
-        {/* Start Time */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Start Time</Text>
-          <TouchableOpacity
-            style={styles.dateButton}
-            onPress={() => setShowStartPicker(true)}
-            disabled={isLoading}
-          >
-            <Ionicons name="calendar-outline" size={20} color="#666" />
-            <Text style={styles.dateText}>
-              {format(startDate, 'MMM d, yyyy HH:mm')}
-            </Text>
-          </TouchableOpacity>
-          {showStartPicker && (
-            <DateTimePicker
-              value={startDate}
-              mode="datetime"
-              is24Hour={true}
-              display="default"
-              onChange={(event, selectedDate) => {
-                setShowStartPicker(false);
-                if (selectedDate) {
-                  setStartDate(selectedDate);
-                  if (selectedDate >= endDate) {
-                    setEndDate(new Date(selectedDate.getTime() + 60 * 60 * 1000));
+          {/* Calendar Source */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Calendar</Text>
+            <View style={styles.sourcesContainer}>
+              {CALENDAR_SOURCES.map(source => (
+                <TouchableOpacity
+                  key={source.id}
+                  style={[
+                    styles.sourceChip,
+                    calendarSource === source.id && {
+                      backgroundColor: source.color,
+                      borderColor: source.color
+                    }
+                  ]}
+                  onPress={() => setCalendarSource(source.id)}
+                  disabled={isLoading}
+                >
+                  <View 
+                    style={[
+                      styles.sourceDot, 
+                      { backgroundColor: source.color }
+                    ]} 
+                  />
+                  <Text style={[
+                    styles.sourceText,
+                    calendarSource === source.id && styles.sourceTextActive
+                  ]}>
+                    {source.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Start Time */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Start Time</Text>
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={() => setShowStartPicker(true)}
+              disabled={isLoading}
+            >
+              <Ionicons name="calendar-outline" size={20} color="#666" />
+              <Text style={styles.dateText}>
+                {format(startDate, 'MMM d, yyyy HH:mm')}
+              </Text>
+            </TouchableOpacity>
+            {showStartPicker && (
+              <CustomDateTimePicker
+                testID="startDatePicker"
+                value={startDate}
+                mode="datetime"
+                is24Hour={true}
+                onChange={(event, selectedDate) => {
+                  setShowStartPicker(false);
+                  if (event.type === 'set' && selectedDate) {
+                    setStartDate(selectedDate);
+                    if (selectedDate >= endDate) {
+                      setEndDate(new Date(selectedDate.getTime() + 60 * 60 * 1000));
+                    }
                   }
-                }
-              }}
+                }}
+              />
+            )}
+
+          </View>
+
+          {/* End Time */}
+          <View style={styles.field}>
+            <Text style={styles.label}>End Time</Text>
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={() => setShowEndPicker(true)}
+              disabled={isLoading}
+            >
+              <Ionicons name="calendar-outline" size={20} color="#666" />
+              <Text style={styles.dateText}>
+                {format(endDate, 'MMM d, yyyy HH:mm')}
+              </Text>
+            </TouchableOpacity>
+            {showEndPicker && (
+              <CustomDateTimePicker
+                testID="endDatePicker"
+                value={endDate}
+                mode="datetime"
+                is24Hour={true}
+                minimumDate={startDate}
+                onChange={(event, selectedDate) => {
+                  setShowEndPicker(false);
+                  if (event.type === 'set' && selectedDate) {
+                    setEndDate(selectedDate);
+                  }
+                }}
+              />
+            )}
+
+          </View>
+
+          {/* Location */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Location</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Add location"
+              value={location}
+              onChangeText={setLocation}
+              editable={!isLoading}
             />
-          )}
-        </View>
+          </View>
 
-        {/* End Time */}
-        <View style={styles.field}>
-          <Text style={styles.label}>End Time</Text>
-          <TouchableOpacity
-            style={styles.dateButton}
-            onPress={() => setShowEndPicker(true)}
-            disabled={isLoading}
-          >
-            <Ionicons name="calendar-outline" size={20} color="#666" />
-            <Text style={styles.dateText}>
-              {format(endDate, 'MMM d, yyyy HH:mm')}
-            </Text>
-          </TouchableOpacity>
-          {showEndPicker && (
-            <DateTimePicker
-              value={endDate}
-              mode="datetime"
-              is24Hour={true}
-              display="default"
-              minimumDate={startDate}
-              onChange={(event, selectedDate) => {
-                setShowEndPicker(false);
-                if (selectedDate) {
-                  setEndDate(selectedDate);
-                }
-              }}
+          {/* Description */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Description</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Add description"
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              editable={!isLoading}
             />
-          )}
-        </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
-        {/* Location */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Location</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Add location"
-            value={location}
-            onChangeText={setLocation}
-            editable={!isLoading}
-          />
-        </View>
-
-        {/* Description */}
-        <View style={styles.field}>
-          <Text style={styles.label}>Description</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Add description"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-            editable={!isLoading}
-          />
-        </View>
-      </ScrollView>
-
-      {/* Action Buttons */}
+      {/* Action Buttons - Fixed at bottom */}
       <View style={styles.actions}>
         <TouchableOpacity
           style={[styles.actionButton, styles.cancelButton]}
@@ -231,7 +248,7 @@ export default function CreateEventScreen() {
           )}
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -240,9 +257,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff'
   },
+  keyboardAvoidingView: {
+    flex: 1
+  },
   content: {
-    flex: 1,
-    padding: 16
+    flex: 1
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 20
   },
   field: {
     marginBottom: 24
@@ -313,7 +336,16 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
     borderTopWidth: 1,
-    borderTopColor: '#eee'
+    borderTopColor: '#eee',
+    backgroundColor: '#fff',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   actionButton: {
     flex: 1,

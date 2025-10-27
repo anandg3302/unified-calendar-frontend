@@ -17,7 +17,8 @@ import { useRouter } from 'expo-router';
 const CALENDAR_COLORS = {
   google: '#4285F4',
   apple: '#FF3B30',
-  outlook: '#0078D4'
+  outlook: '#0078D4',
+  local: '#34C759'
 };
 
 export default function CalendarScreen() {
@@ -28,12 +29,13 @@ export default function CalendarScreen() {
     selectedSources, 
     selectedDate,
     isLoading,
+    appleConnected,
     fetchEvents, 
     fetchCalendarSources,
     toggleSource,
     setSelectedDate
   } = useCalendarStore();
-
+   
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -52,19 +54,21 @@ export default function CalendarScreen() {
   };
 
   // Filter events for selected date
-  const selectedDateEvents = events.filter(event => {
-    const eventDate = parseISO(event.start_time);
-    return isSameDay(eventDate, selectedDate);
-  });
+const selectedDateEvents = Array.isArray(events)
+  ? events.filter(event => isSameDay(parseISO(event.start_time), selectedDate))
+  : [];
 
   // Create marked dates for calendar
-  const markedDates = events.reduce((acc: any, event) => {
-    const dateStr = format(parseISO(event.start_time), 'yyyy-MM-dd');
-    if (!acc[dateStr]) {
-      acc[dateStr] = { marked: true, dots: [] };
-    }
-    return acc;
-  }, {});
+ const markedDates = Array.isArray(events)
+  ? events.reduce((acc: any, event) => {
+      const dateStr = format(parseISO(event.start_time), 'yyyy-MM-dd');
+      if (!acc[dateStr]) {
+        acc[dateStr] = { marked: true, dots: [] };
+      }
+      return acc;
+    }, {})
+  : {};
+
 
   // Mark selected date
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
@@ -107,6 +111,27 @@ export default function CalendarScreen() {
             </Text>
           </TouchableOpacity>
         ))}
+        
+        {/* Apple Calendar Connection Status */}
+        {appleConnected && (
+          <TouchableOpacity
+            style={[
+              styles.filterChip,
+              selectedSources.includes('apple') && {
+                backgroundColor: '#FF3B30'
+              }
+            ]}
+            onPress={() => toggleSource('apple')}
+          >
+            <Ionicons name="logo-apple" size={12} color="#FF3B30" />
+            <Text style={[
+              styles.filterText,
+              selectedSources.includes('apple') && styles.filterTextActive
+            ]}>
+              Apple
+            </Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
       {/* Calendar */}
