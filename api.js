@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import axios from 'axios';
 
-const API_BASE = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL || 'http://10.180.141.59:8000';
+const API_BASE = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL || 'https://10.180.141.59:8000';
 
 // Create axios instance with default config
 const api = axios.create({
