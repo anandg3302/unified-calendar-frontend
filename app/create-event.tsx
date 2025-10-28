@@ -16,6 +16,8 @@ import { useCalendarStore } from '../stores/calendarStore';
 import { format } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
 import CustomDateTimePicker from '../components/CustomDateTimePicker';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const CALENDAR_SOURCES = [
   { id: 'google', name: 'Google Calendar', color: '#4285F4' },
@@ -33,6 +35,7 @@ export default function CreateEventScreen() {
   const [calendarSource, setCalendarSource] = useState('google');
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date(Date.now() + 60 * 60 * 1000)); // 1 hour later
+  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -65,7 +68,8 @@ export default function CreateEventScreen() {
         location: location.trim(),
         calendar_source: calendarSource,
         start_time: startDate.toISOString(),
-        end_time: endDate.toISOString()
+        end_time: endDate.toISOString(),
+        month: format(selectedMonth, 'yyyy-MM')
       });
       
       Alert.alert('Success', 'Event created successfully');
@@ -88,6 +92,28 @@ export default function CreateEventScreen() {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Month (Month/Year) */}
+          <View style={styles.field}>
+            <Text style={styles.label}>Month</Text>
+            {Platform.OS === 'web' ? (
+              <DatePicker
+                selected={selectedMonth}
+                onChange={(date: Date | null) => {
+                  if (!date) return;
+                  const normalized = new Date(date.getFullYear(), date.getMonth(), 1);
+                  setSelectedMonth(normalized);
+                }}
+                showMonthYearPicker
+                dateFormat="MM/yyyy"
+              />
+            ) : (
+              <View style={[styles.dateButton, { justifyContent: 'space-between' }]}>
+                <Text style={styles.dateText}>{format(selectedMonth, 'MMM yyyy')}</Text>
+                <Ionicons name="chevron-down" size={18} color="#666" />
+              </View>
+            )}
+          </View>
+
           {/* Title */}
           <View style={styles.field}>
             <Text style={styles.label}>Title *</Text>
@@ -137,32 +163,52 @@ export default function CreateEventScreen() {
           {/* Start Time */}
           <View style={styles.field}>
             <Text style={styles.label}>Start Time</Text>
-            <TouchableOpacity
-              style={styles.dateButton}
-              onPress={() => setShowStartPicker(true)}
-              disabled={isLoading}
-            >
-              <Ionicons name="calendar-outline" size={20} color="#666" />
-              <Text style={styles.dateText}>
-                {format(startDate, 'MMM d, yyyy HH:mm')}
-              </Text>
-            </TouchableOpacity>
-            {showStartPicker && (
-              <CustomDateTimePicker
-                testID="startDatePicker"
-                value={startDate}
-                mode="datetime"
-                is24Hour={true}
-                onChange={(event, selectedDate) => {
-                  setShowStartPicker(false);
-                  if (event.type === 'set' && selectedDate) {
-                    setStartDate(selectedDate);
-                    if (selectedDate >= endDate) {
-                      setEndDate(new Date(selectedDate.getTime() + 60 * 60 * 1000));
-                    }
+            {Platform.OS === 'web' ? (
+              <DatePicker
+                selected={startDate}
+                onChange={(date: Date | null) => {
+                  if (!date) return;
+                  setStartDate(date);
+                  if (date >= endDate) {
+                    setEndDate(new Date(date.getTime() + 60 * 60 * 1000));
                   }
                 }}
+                showMonthDropdown
+                showYearDropdown
+                showTimeSelect
+                timeIntervals={15}
+                dateFormat="dd/MM/yyyy h:mm aa"
               />
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={styles.dateButton}
+                  onPress={() => setShowStartPicker(true)}
+                  disabled={isLoading}
+                >
+                  <Ionicons name="calendar-outline" size={20} color="#666" />
+                  <Text style={styles.dateText}>
+                    {format(startDate, 'MMM d, yyyy HH:mm')}
+                  </Text>
+                </TouchableOpacity>
+                {showStartPicker && (
+                  <CustomDateTimePicker
+                    testID="startDatePicker"
+                    value={startDate}
+                    mode="datetime"
+                    is24Hour={true}
+                    onChange={(event, selectedDate) => {
+                      setShowStartPicker(false);
+                      if (event.type === 'set' && selectedDate) {
+                        setStartDate(selectedDate);
+                        if (selectedDate >= endDate) {
+                          setEndDate(new Date(selectedDate.getTime() + 60 * 60 * 1000));
+                        }
+                      }
+                    }}
+                  />
+                )}
+              </>
             )}
 
           </View>
@@ -170,30 +216,48 @@ export default function CreateEventScreen() {
           {/* End Time */}
           <View style={styles.field}>
             <Text style={styles.label}>End Time</Text>
-            <TouchableOpacity
-              style={styles.dateButton}
-              onPress={() => setShowEndPicker(true)}
-              disabled={isLoading}
-            >
-              <Ionicons name="calendar-outline" size={20} color="#666" />
-              <Text style={styles.dateText}>
-                {format(endDate, 'MMM d, yyyy HH:mm')}
-              </Text>
-            </TouchableOpacity>
-            {showEndPicker && (
-              <CustomDateTimePicker
-                testID="endDatePicker"
-                value={endDate}
-                mode="datetime"
-                is24Hour={true}
-                minimumDate={startDate}
-                onChange={(event, selectedDate) => {
-                  setShowEndPicker(false);
-                  if (event.type === 'set' && selectedDate) {
-                    setEndDate(selectedDate);
-                  }
+            {Platform.OS === 'web' ? (
+              <DatePicker
+                selected={endDate}
+                onChange={(date: Date | null) => {
+                  if (!date) return;
+                  setEndDate(date);
                 }}
+                showMonthDropdown
+                showYearDropdown
+                showTimeSelect
+                timeIntervals={15}
+                minDate={startDate}
+                dateFormat="dd/MM/yyyy h:mm aa"
               />
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={styles.dateButton}
+                  onPress={() => setShowEndPicker(true)}
+                  disabled={isLoading}
+                >
+                  <Ionicons name="calendar-outline" size={20} color="#666" />
+                  <Text style={styles.dateText}>
+                    {format(endDate, 'MMM d, yyyy HH:mm')}
+                  </Text>
+                </TouchableOpacity>
+                {showEndPicker && (
+                  <CustomDateTimePicker
+                    testID="endDatePicker"
+                    value={endDate}
+                    mode="datetime"
+                    is24Hour={true}
+                    minimumDate={startDate}
+                    onChange={(event, selectedDate) => {
+                      setShowEndPicker(false);
+                      if (event.type === 'set' && selectedDate) {
+                        setEndDate(selectedDate);
+                      }
+                    }}
+                  />
+                )}
+              </>
             )}
 
           </View>

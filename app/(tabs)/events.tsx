@@ -9,9 +9,14 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { useCalendarStore } from '../../stores/calendarStore';
-import { parseISO, isToday, isFuture, isPast, format } from 'date-fns';
+import { parseISO, isToday, isFuture, isPast, format, isSameMonth } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
+import { Edit3, Trash2 } from '../../components/icons';
+import { Alert as RNAlert } from 'react-native';
 import { useRouter } from 'expo-router';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { Platform } from 'react-native';
 
 const CALENDAR_COLORS = {
   google: '#4285F4',
@@ -25,6 +30,7 @@ export default function EventsScreen() {
   const { events: calendarEvents, isLoading, fetchEvents } = useCalendarStore();
    const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'invites'>('upcoming');
+  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
 
   useEffect(() => {
     fetchEvents();
@@ -42,20 +48,26 @@ export default function EventsScreen() {
  switch (filter) {
   case 'upcoming':
     return Array.isArray(calendarEvents)
-      ? calendarEvents.filter(event =>
-          isFuture(parseISO(event.start_time)) || isToday(parseISO(event.start_time))
-        )
+      ? calendarEvents
+          .filter(event => isFuture(parseISO(event.start_time)) || isToday(parseISO(event.start_time)))
+          .filter(event => isSameMonth(parseISO(event.start_time), selectedMonth))
       : [];
   case 'past':
     return Array.isArray(calendarEvents)
-      ? calendarEvents.filter(event => isPast(parseISO(event.end_time)))
+      ? calendarEvents
+          .filter(event => isPast(parseISO(event.end_time)))
+          .filter(event => isSameMonth(parseISO(event.start_time), selectedMonth))
       : [];
   case 'invites':
     return Array.isArray(calendarEvents)
-      ? calendarEvents.filter(event => event.is_invite && event.invite_status === 'pending')
+      ? calendarEvents
+          .filter(event => event.is_invite && event.invite_status === 'pending')
+          .filter(event => isSameMonth(parseISO(event.start_time), selectedMonth))
       : [];
   default:
-    return Array.isArray(calendarEvents) ? calendarEvents : [];
+    return Array.isArray(calendarEvents)
+      ? calendarEvents.filter(event => isSameMonth(parseISO(event.start_time), selectedMonth))
+      : [];
 }
 
   };
@@ -63,7 +75,7 @@ export default function EventsScreen() {
   const filteredEvents = getFilteredEvents();
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} className="">
       {/* Filter Tabs */}
       <ScrollView 
         horizontal 
@@ -72,6 +84,7 @@ export default function EventsScreen() {
       >
         <TouchableOpacity
           style={[styles.filterTab, filter === 'upcoming' && styles.filterTabActive]}
+          className={filter === 'upcoming' ? 'bg-orange-500' : 'bg-orange-50'}
           onPress={() => setFilter('upcoming')}
         >
           <Text style={[styles.filterTabText, filter === 'upcoming' && styles.filterTabTextActive]}>
@@ -80,6 +93,7 @@ export default function EventsScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.filterTab, filter === 'invites' && styles.filterTabActive]}
+          className={filter === 'invites' ? 'bg-orange-500' : 'bg-orange-50'}
           onPress={() => setFilter('invites')}
         >
           <Text style={[styles.filterTabText, filter === 'invites' && styles.filterTabTextActive]}>
@@ -88,6 +102,7 @@ export default function EventsScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.filterTab, filter === 'past' && styles.filterTabActive]}
+          className={filter === 'past' ? 'bg-orange-500' : 'bg-orange-50'}
           onPress={() => setFilter('past')}
         >
           <Text style={[styles.filterTabText, filter === 'past' && styles.filterTabTextActive]}>
@@ -96,6 +111,7 @@ export default function EventsScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.filterTab, filter === 'all' && styles.filterTabActive]}
+          className={filter === 'all' ? 'bg-orange-500' : 'bg-orange-50'}
           onPress={() => setFilter('all')}
         >
           <Text style={[styles.filterTabText, filter === 'all' && styles.filterTabTextActive]}>
@@ -104,12 +120,34 @@ export default function EventsScreen() {
         </TouchableOpacity>
       </ScrollView>
 
+      {/* Month Selector */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#eee' }}>
+        <Text style={{ fontSize: 14, color: '#666', fontWeight: '600' }}>Month</Text>
+        {Platform.OS === 'web' ? (
+          <DatePicker
+            selected={selectedMonth}
+            onChange={(date: Date | null) => {
+              if (!date) return;
+              const normalized = new Date(date.getFullYear(), date.getMonth(), 1);
+              setSelectedMonth(normalized);
+            }}
+            showMonthYearPicker
+            dateFormat="MM/yyyy"
+          />
+        ) : (
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ fontSize: 16, color: '#333' }}>{format(selectedMonth, 'MMM yyyy')}</Text>
+          </View>
+        )}
+      </View>
+
       {/* Events List */}
       <ScrollView
         style={styles.eventsList}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        contentContainerStyle={{ paddingVertical: 8 }}
       >
         {isLoading && !refreshing ? (
           <ActivityIndicator size="large" color="#4285F4" style={styles.loader} />
@@ -131,6 +169,7 @@ export default function EventsScreen() {
                   styles.eventCard,
                   { borderLeftColor: CALENDAR_COLORS[event.calendar_source as keyof typeof CALENDAR_COLORS] }
                 ]}
+                className="hover:shadow-lg transition-all duration-200"
                 onPress={() => router.push(`/event-details?id=${event.id}`)}
               >
                 <View style={styles.eventHeader}>
@@ -159,6 +198,21 @@ export default function EventsScreen() {
                         <Text style={styles.eventLocationText}>{event.location}</Text>
                       </View>
                     )}
+                    <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                      <TouchableOpacity onPress={() => router.push(`/edit-event?id=${event.id}`)} accessibilityLabel="Edit event">
+                        <Edit3 size={18} color="#4b5563" />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => RNAlert.alert('Delete', 'Delete this event?', [
+                        { text: 'Cancel', style: 'cancel' },
+                        { text: 'Delete', style: 'destructive', onPress: async () => {
+                          try {
+                            await useCalendarStore.getState().deleteEvent(event.id);
+                          } catch {}
+                        }}
+                      ])} accessibilityLabel="Delete event">
+                        <Trash2 size={18} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
                 

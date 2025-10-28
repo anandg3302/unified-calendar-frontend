@@ -1,104 +1,119 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  Alert
+  TextInput,
+  Pressable,
+  Alert,
+  TouchableOpacity
 } from 'react-native';
-import { useAuth } from '../../contexts/AuthContext';
-import { useRouter } from 'expo-router';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useAuth } from '../../contexts/AuthContext';
+
+const GOLD = '#FFD700';
+const BG = '#0A0A0A';
+const CARD = '#1E1E1E';
+const TEXT = '#FFFFFF';
+const MUTED = '#EAEAEA99';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
   const router = useRouter();
+  const { user, logout } = useAuth();
+
+  const [name, setName] = useState(user?.name || 'Anand Gupta');
+  const [email, setEmail] = useState(user?.email || 'user@example.com');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+
+  const saveProfile = () => {
+    Alert.alert('Profile Updated', 'Your profile changes have been saved.');
+  };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/(auth)/login');
-          }
+    Alert.alert('Logout', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+          router.replace('/(auth)/login');
         }
-      ]
-    );
+      }
+    ]);
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.avatarContainer}>
-          <Ionicons name="person" size={48} color="#4285F4" />
+      {/* Header */}
+      <Animated.View entering={FadeIn.duration(250)} style={styles.header}>
+        <Text style={styles.title}>Profile</Text>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarTxt}>
+            {name ? name.charAt(0).toUpperCase() : 'U'}
+          </Text>
         </View>
-        <Text style={styles.name}>{user?.name}</Text>
-        <Text style={styles.email}>{user?.email}</Text>
-      </View>
+      </Animated.View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Connected Calendars</Text>
-        
-        <View style={styles.calendarItem}>
-          <View style={[styles.calendarDot, { backgroundColor: '#4285F4' }]} />
-          <View style={styles.calendarInfo}>
-            <Text style={styles.calendarName}>Google Calendar</Text>
-            <Text style={styles.calendarStatus}>Connected</Text>
-          </View>
-          <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
-        </View>
-
-        <View style={styles.calendarItem}>
-          <View style={[styles.calendarDot, { backgroundColor: '#FF3B30' }]} />
-          <View style={styles.calendarInfo}>
-            <Text style={styles.calendarName}>Apple Calendar</Text>
-            <Text style={styles.calendarStatus}>Connected</Text>
-          </View>
-          <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+      {/* Profile Form */}
+      <Animated.View entering={FadeInDown.duration(300)} style={styles.card}>
+        <Text style={styles.label}>Name</Text>
+        <View style={styles.inputWrap}>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            placeholderTextColor={MUTED}
+          />
         </View>
 
-        <View style={styles.calendarItem}>
-          <View style={[styles.calendarDot, { backgroundColor: '#0078D4' }]} />
-          <View style={styles.calendarInfo}>
-            <Text style={styles.calendarName}>Outlook Calendar</Text>
-            <Text style={styles.calendarStatus}>Connected</Text>
-          </View>
-          <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+        <Text style={styles.label}>Email</Text>
+        <View style={styles.inputWrap}>
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            placeholderTextColor={MUTED}
+          />
         </View>
-      </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Settings</Text>
-        
-        <TouchableOpacity style={styles.settingItem}>
-          <Ionicons name="notifications-outline" size={24} color="#333" />
-          <Text style={styles.settingText}>Notifications</Text>
-          <Ionicons name="chevron-forward" size={20} color="#999" />
+        <Text style={styles.label}>Phone</Text>
+        <View style={styles.inputWrap}>
+          <TextInput
+            style={styles.input}
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+            placeholder="Optional"
+            placeholderTextColor={MUTED}
+          />
+        </View>
+
+        <Text style={styles.label}>Change Password</Text>
+        <View style={styles.inputWrap}>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            placeholder="New password"
+            placeholderTextColor={MUTED}
+          />
+        </View>
+
+        <Pressable style={styles.primaryBtn} onPress={saveProfile}>
+          <Text style={styles.primaryText}>Save Changes</Text>
+        </Pressable>
+
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={18} color="#F87171" />
+          <Text style={styles.logoutText}>Log out</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.settingItem}>
-          <Ionicons name="time-outline" size={24} color="#333" />
-          <Text style={styles.settingText}>Sync Settings</Text>
-          <Ionicons name="chevron-forward" size={20} color="#999" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.settingItem}>
-          <Ionicons name="color-palette-outline" size={24} color="#333" />
-          <Text style={styles.settingText}>Theme</Text>
-          <Ionicons name="chevron-forward" size={20} color="#999" />
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Ionicons name="log-out-outline" size={24} color="#F44336" />
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
+      </Animated.View>
 
       <Text style={styles.version}>Version 1.0.0</Text>
     </View>
@@ -106,112 +121,70 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5'
-  },
+  container: { flex: 1, backgroundColor: BG },
   header: {
-    backgroundColor: '#fff',
-    padding: 24,
+    padding: 16,
+    flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee'
+    justifyContent: 'space-between'
   },
-  avatarContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#E8F0FE',
+  title: { color: TEXT, fontSize: 22, fontWeight: '800' },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#111',
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16
+    borderWidth: 1,
+    borderColor: '#2A2A2A'
   },
-  name: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4
+  avatarTxt: { color: TEXT, fontWeight: '700', fontSize: 14 },
+  card: {
+    marginHorizontal: 16,
+    marginTop: 6,
+    padding: 16,
+    backgroundColor: CARD,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#2A2A2A'
   },
-  email: {
-    fontSize: 14,
-    color: '#666'
-  },
-  section: {
-    backgroundColor: '#fff',
-    marginTop: 16,
-    paddingVertical: 8
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#999',
-    textTransform: 'uppercase',
-    paddingHorizontal: 16,
+  label: { color: MUTED, fontSize: 12, marginTop: 10, marginBottom: 6 },
+  inputWrap: {
+    backgroundColor: '#151515',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#222',
+    paddingHorizontal: 12,
     paddingVertical: 12
   },
-  calendarItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0'
-  },
-  calendarDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 12
-  },
-  calendarInfo: {
-    flex: 1
-  },
-  calendarName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 2
-  },
-  calendarStatus: {
-    fontSize: 12,
-    color: '#666'
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0'
-  },
-  settingText: {
-    flex: 1,
-    fontSize: 16,
-    color: '#333',
-    marginLeft: 12
-  },
-  logoutButton: {
-    flexDirection: 'row',
+  input: { color: TEXT, fontSize: 14 },
+  primaryBtn: {
+    backgroundColor: GOLD,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginTop: 24,
-    paddingVertical: 16,
-    borderRadius: 12,
+    paddingVertical: 14,
+    marginTop: 16
+  },
+  primaryText: { color: '#000', fontWeight: '800', fontSize: 16 },
+  logoutBtn: {
+    marginTop: 16,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#F44336'
+    borderColor: '#3A3A3A'
   },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#F44336',
-    marginLeft: 8
-  },
+  logoutText: { color: '#F87171', fontWeight: '700' },
   version: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#999',
-    marginTop: 24
+    color: MUTED,
+    marginTop: 20
   }
 });

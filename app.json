@@ -1,18 +1,21 @@
 {
   "expo": {
     "name": "frontend",
-    "slug": "frontend",
+    "slug": "unifiedcalender1",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "frontend",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "cli": {
+      "appVersionSource": "remote"
+    },
     "extra": {
-      "EXPO_PUBLIC_BACKEND_URL": "http://10.180.141.59:8000",
+      "EXPO_PUBLIC_BACKEND_URL":"https://unified-calendar-backend-1.onrender.com",
       "router": {},
       "eas": {
-        "projectId": "782b5518-2927-4777-9dd8-69b5b7563ce1"
+        "projectId": "69762b7c-f38e-451c-9980-dba308664368"
       }
     },
     "ios": {
@@ -53,9 +56,6 @@
     "experiments": {
       "typedRoutes": true
     },
-    "owner": "anandg9392",
-    "updates": {
-      "url": "https://u.expo.dev/782b5518-2927-4777-9dd8-69b5b7563ce1"
-    }
+    "owner": "anandg1"
   }
 }

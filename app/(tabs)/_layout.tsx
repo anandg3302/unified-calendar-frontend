@@ -13,42 +13,51 @@ export default function TabsLayout() {
           borderTopColor: '#eee',
           height: 60,
           paddingBottom: 8,
-          paddingTop: 8
+          paddingTop: 8,
         },
         headerStyle: {
-          backgroundColor: '#4285F4'
+          backgroundColor: '#4285F4',
         },
         headerTintColor: '#fff',
         headerTitleStyle: {
-          fontWeight: '600'
-        }
+          fontWeight: '600',
+        },
       }}
     >
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+            <Ionicons name="home" color={color} size={size} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="calendar"
         options={{
           title: 'Calendar',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar" size={size} color={color} />
-          )
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+            <Ionicons name="calendar" color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="events"
+        name="tasks"
         options={{
-          title: 'Events',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="list" size={size} color={color} />
-          )
+          title: 'Tasks',
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+            <Ionicons name="checkmark-done" color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          )
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+            <Ionicons name="person" color={color} size={size} />
+          ),
         }}
       />
     </Tabs>
